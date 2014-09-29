@@ -215,7 +215,7 @@ function Gravity() {
         var part = new Part(
           Math.random()*CANVAS.width, Math.random()*CANVAS.height,
           vx, vy,
-          (Math.random()*10 + 3) * SKETCH_OPTIONS.partMassFactor
+          (Math.random()*100 + 3) * SKETCH_OPTIONS.partMassFactor
         );
         this.add(part);
       }
