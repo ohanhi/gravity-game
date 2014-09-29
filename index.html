@@ -88,31 +88,6 @@
 
 <canvas id="processing-canvas" width="100%" height="100%"></canvas>
 
-<div id="dialog" class="open">
-  <h1>Gravity</h1>
-  <h2>Simple universal gravity simulation</h2>
-  <p><em>Pause with SPACE key, click a part to see its traveling path.</em></p>
-  <form action="#" id="params">
-    <label for="partCount">Initial part count (large numbers make start slow)</label>
-    <input type="number" min="0.1" step="1" id="partCount" value="1000">
-
-    <label for="partMassFactor">Part mass factor (multiplier)</label>
-    <input type="number" min="0.0001" step="0.1" id="partMassFactor" value="0.2">
-
-    <label for="centerMass">Mass of the central part</label>
-    <input type="number" min="1" step="1" id="centerMass" value="10000">
-
-    <label for="gravitationalConstant">Gravitational constant</label>
-    <input type="number" min="0.1" step="0.1" id="gravitationalConstant" value="1.0">
-
-
-    <button id="start">Start &raquo;</button>
-  </form>
-
-</div>
-
-<a href="#" id="dialogOpen">⇵</a>
-
 <script src="gravity.js"></script>
 <script>
   var g = new Gravity("processing-canvas");
