@@ -18,6 +18,8 @@ function Gravity() {
     CLICK_RADIUS = 10.0,
     COORD_MAX = 2000;
 
+    var traveled = 0;
+
     /**
     Newton's universal gravitation function.
 
@@ -76,6 +78,7 @@ function Gravity() {
         this.y += this.vy * TIME_STEP;
 
         this.traveled += P.dist(oldX, oldY, this.x, this.y);
+        traveled = this.traveled;
 
         if (this.highlightPath) {
           drawPath.push([this.x, this.y]);
@@ -86,7 +89,7 @@ function Gravity() {
       color = massToColor(this.m, biggestMass);
       P.fill(color);
       if (this.highlightPath) {
-        P.strokeWeight(1);
+        P.strokeWeight(2);
         P.stroke(0,0,90);
       }
       P.ellipse(this.x, this.y, this.radius*2, this.radius*2);
@@ -168,7 +171,7 @@ function Gravity() {
         P.fill(0);
         P.rect(0, CANVAS.height - 60, 0, CANVAS.height - 40);
         P.fill(90);
-        P.text(self.parts.length, 20, CANVAS.height - 40);
+        P.text(P.round(traveled), 20, CANVAS.height - 40);
 
         P.noFill();
         P.strokeWeight(2);
