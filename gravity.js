@@ -57,7 +57,7 @@ function Gravity() {
     /* List for drawable path vertices */
     var drawPath = [];
 
-    function Part(x, y, vx, vy, m) {
+    function Part(x, y, vx, vy, m, isMoving) {
       this.x = x;
       this.y = y;
       this.vx = vx;
@@ -65,13 +65,21 @@ function Gravity() {
       this.m = m;
       this.radius = massToRadius(this.m);
       this.highlightPath = false;
+      this.isMoving = isMoving;
+      this.traveled = 0;
     }
     Part.prototype.move = function() {
-      this.x += this.vx * TIME_STEP;
-      this.y += this.vy * TIME_STEP;
+      if (this.isMoving) {
+        var oldX = this.x,
+          oldY = this.y;
+        this.x += this.vx * TIME_STEP;
+        this.y += this.vy * TIME_STEP;
 
-      if (this.highlightPath && P.frameCount%4 === 0) {
-        drawPath.push([this.x, this.y]);
+        this.traveled += P.dist(oldX, oldY, this.x, this.y);
+
+        if (this.highlightPath) {
+          drawPath.push([this.x, this.y]);
+        }
       }
     };
     Part.prototype.draw = function(biggestMass) {
@@ -87,7 +95,9 @@ function Gravity() {
       }
     };
     Part.prototype.collide = function(part) {
-      // smaller particle always moves, not the larger
+      this.isMoving = false;
+      part.isMoving = false;
+
       if (part.m > this.m) {
         this.x = part.x;
         this.y = part.y;
@@ -101,10 +111,8 @@ function Gravity() {
       this.radius = massToRadius(this.m);
       part.radius = massToRadius(part.m);
 
-      // highlight this part, if (part) was highlighted
-      if (part.highlightPath === true) {
-        this.highlightPath = true;
-      }
+      part.vx = 0;
+      part.vy = 0;
     };
     /*
     Determines the force from each part of the system and
@@ -151,6 +159,7 @@ function Gravity() {
     };
     PartSystem.prototype.add = function(part) {
       this.parts.push(part);
+      return this.parts.length-1;
     };
     PartSystem.prototype.update = function(draw) {
       var self = this;
@@ -162,8 +171,8 @@ function Gravity() {
         P.text(self.parts.length, 20, CANVAS.height - 40);
 
         P.noFill();
-        P.strokeWeight(1);
-        P.stroke(0,0,100, 60);
+        P.strokeWeight(2);
+        P.stroke(10,60,100, 60);
         P.beginShape();
         drawPath.forEach(function(vertex){
           P.curveVertex(vertex[0], vertex[1]);
@@ -178,7 +187,9 @@ function Gravity() {
 
       self.parts.forEach(function(part, index){
         // Update the position and speed of the part
-        part.updateVelocity(self.parts);
+        if (part.isMoving) {
+          part.updateVelocity(self.parts);
+        }
         part.move();
 
         // Draw the part, if requested
@@ -220,11 +231,28 @@ function Gravity() {
         this.add(part);
       }
     };
+    PartSystem.prototype.launchProbe = function(x, y, x2, y2) {
+      var dx = x2-x,
+        dy = y2-y,
+        v = P.dist(x,y, x2,y2) * 0.05,
+        a = P.atan2(dy, dx) + P.TWO_PI,
+        vy = v * P.sin(a),
+        vx = v * P.cos(a);
+
+      var probe = new Part(
+        x, y,
+        vx, vy,
+        0.01,
+        true
+      );
+      var idx = this.add(probe);
+      ps.setHighlighted(idx);
     };
     // END DEFINITIONS
 
 
     var ps = new PartSystem();
+    ps.randomizeParts(SKETCH_OPTIONS.partCount, 0);
 
     P.setup = function() {
       P.size(CANVAS.width, CANVAS.height);
@@ -248,6 +276,15 @@ function Gravity() {
     };
 
     document.onmousedown = function(evt) {
+      ps.startX = evt.x;
+      ps.startY = evt.y;
+    }
+    document.onmouseup = function(evt) {
+      if (ps.startX && ps.startY) {
+        ps.launchProbe(ps.startX, ps.startY, evt.x, evt.y);
+      }
+      ps.startX = null;
+      ps.startY = null;
     }
   }
 
