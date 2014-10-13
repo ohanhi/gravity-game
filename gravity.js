@@ -1,9 +1,10 @@
 function Gravity() {
 
   var SKETCH_OPTIONS = {
-    partCount: 20,
+    partCount: 10,
     partMassFactor: 20,
-    gravitationalConstant: 10.0
+    gravitationalConstant: 6.0,
+    vertexCount: 500
   };
 
   function sketchProc(P) {
@@ -53,11 +54,17 @@ function Gravity() {
         biggestMass = m;
       }
       var hue = parseInt((P.atan(m/biggestMass)*colorC*60+10)%100, 10);
-      return P.color(hue,100,100, 80);
+      return P.color(hue,100,100, 100);
     };
 
+    const velocityToColor = function(v) {
+      var vc = v*1.5 + 60;
+      var hue = parseInt(vc%100, 10);
+      return P.color(hue,100,80, 100);
+    }
+
     /* List for drawable path vertices */
-    var drawPath = [];
+    var pathVertices = [];
 
     function Part(x, y, vx, vy, m, isMoving) {
       this.x = x;
@@ -80,21 +87,19 @@ function Gravity() {
         this.traveled += P.dist(oldX, oldY, this.x, this.y);
         traveled = this.traveled;
 
-        if (this.highlightPath) {
-          drawPath.push([this.x, this.y]);
+        if (this.highlightPath && P.frameCount%5 == 0) {
+          pathVertices.push([this.x, this.y, P.dist(0,0, this.vx,this.vy)]);
         }
       }
     };
     Part.prototype.draw = function(biggestMass) {
-      color = massToColor(this.m, biggestMass);
-      P.fill(color);
-      if (this.highlightPath) {
-        P.strokeWeight(2);
-        P.stroke(0,0,90);
-      }
-      P.ellipse(this.x, this.y, this.radius*2, this.radius*2);
-      if (this.highlightPath) {
-        P.noStroke();
+      if (this.isMoving) {
+        P.fill(100,0,100);
+        P.ellipse(this.x, this.y, 5, 5);
+      } else {
+        var color = massToColor(this.m, biggestMass);
+        P.fill(color);
+        P.ellipse(this.x, this.y, this.radius*2, this.radius*2);
       }
     };
     Part.prototype.collide = function(part) {
@@ -172,23 +177,22 @@ function Gravity() {
       var self = this;
 
       if (draw && draw === true) {
-        P.fill(0);
-        P.rect(0, CANVAS.height - 60, 0, CANVAS.height - 40);
         P.fill(90);
         P.text(P.round(traveled), 20, CANVAS.height - 40);
 
         P.noFill();
-        P.strokeWeight(2);
-        P.stroke(10,60,100, 60);
+        P.noStroke();
         P.beginShape();
-        drawPath.forEach(function(vertex){
-          P.curveVertex(vertex[0], vertex[1]);
+        pathVertices.forEach(function(vertex){
+          var color = velocityToColor(vertex[2]);
+          P.fill(color);
+          P.ellipse(vertex[0], vertex[1], 4, 4);
         });
         P.endShape();
         P.noStroke();
 
-        if (drawPath.length > 1000) {
-          drawPath.splice(0,1);
+        if (pathVertices.length > SKETCH_OPTIONS.vertexCount) {
+          pathVertices.splice(0,1);
         }
       }
 
@@ -215,12 +219,12 @@ function Gravity() {
         P.fill(90);
         P.text("PAUSE", CANVAS.width*0.5, CANVAS.height*0.5);
       } else {
-        P.background(0,0,0, 40);
+        P.background(0,0,10, 100);
         this.update(true);
       }
     };
     PartSystem.prototype.setHighlighted = function(i) {
-      drawPath = [];
+      pathVertices = [];
       this.parts.forEach(function(part){
         part.highlightPath = false;
       });
@@ -234,6 +238,39 @@ function Gravity() {
           Math.random()*CANVAS.width, Math.random()*CANVAS.height,
           vx, vy,
           (Math.random()*100 + 3) * SKETCH_OPTIONS.partMassFactor
+        );
+        this.add(part);
+      }
+    };
+    PartSystem.prototype.createProtoDisk = function(n) {
+      var canvasMin = (CANVAS.width < CANVAS.height) ? CANVAS.width : CANVAS.height,
+        gaussianFactor = canvasMin * 0.15;
+        cx = CANVAS.width * 0.5,
+        cy = CANVAS.height * 0.5;
+
+      for (var i = 0; i < n; i++) {
+        var x, y, vx, vy, d, a, v;
+
+        // Get Gaussian random position
+        x = P.randomGaussian() * gaussianFactor;
+        y = P.randomGaussian() * gaussianFactor;
+        d = P.dist(x,y, 0,0);
+
+        // Calculate angle, randomize start velocity along tangent
+        a = P.atan2(y, x) + P.PI,
+        v = Math.random()*8 + 2;
+
+        vx = v * P.sin(a);
+        vy = -1 * v * P.cos(a);
+
+        // Move to canvas centre
+        x += cx;
+        y += cy;
+
+        var part = new Part(
+          x, y,
+          vx, vy,
+          (Math.random()*30 + 3) * SKETCH_OPTIONS.partMassFactor
         );
         this.add(part);
       }
@@ -259,7 +296,7 @@ function Gravity() {
 
 
     var ps = new PartSystem();
-    ps.randomizeParts(SKETCH_OPTIONS.partCount, 0);
+    ps.createProtoDisk(SKETCH_OPTIONS.partCount, 0);
 
     P.setup = function() {
       P.size(CANVAS.width, CANVAS.height);
@@ -269,9 +306,20 @@ function Gravity() {
       P.textSize(24);
     };
 
+    var startX, startY;
+
     // Override draw function, by default it will be called 60 times per second
     P.draw = function() {
       ps.redraw();
+
+      if (startX && startY) {
+        P.stroke(100);
+        P.fill(100)
+        P.strokeWeight(2);
+        P.line(startX, startY, P.mouseX, P.mouseY);
+        P.ellipse(startX, startY, 4, 4);
+        P.noStroke();
+      }
     };
 
     document.onkeydown = function(evt) {
@@ -283,15 +331,15 @@ function Gravity() {
     };
 
     document.onmousedown = function(evt) {
-      ps.startX = evt.x;
-      ps.startY = evt.y;
+      startX = evt.x;
+      startY = evt.y;
     }
     document.onmouseup = function(evt) {
-      if (ps.startX && ps.startY) {
-        ps.launchProbe(ps.startX, ps.startY, evt.x, evt.y);
+      if (startX && startY) {
+        ps.launchProbe(startX, startY, evt.x, evt.y);
       }
-      ps.startX = null;
-      ps.startY = null;
+      startX = null;
+      startY = null;
     }
   }
 
