@@ -16,7 +16,7 @@ function Gravity() {
     TIME_STEP = 0.1,
     COLLISION_CONSTANT = 2.0,
     CLICK_RADIUS = 10.0,
-    COORD_MAX = 2000;
+    COORD_MAX = 0;
 
     var traveled = 0;
 
@@ -125,7 +125,11 @@ function Gravity() {
       var self = this, ax = 0, ay = 0;
       parts.forEach(function(part, index){
         // remove parts too far from the center
-        if (P.abs(part.x) > COORD_MAX || P.abs(part.y) > COORD_MAX) {
+        if (part.x > CANVAS.width + COORD_MAX
+          || part.x < 0 - COORD_MAX
+          || part.y > CANVAS.height + COORD_MAX
+          || part.y < 0 - COORD_MAX) {
+          // Outside the universe!
           parts.splice(index, 1);
           return;
         }
