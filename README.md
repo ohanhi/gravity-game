@@ -1,34 +1,14 @@
-Gravity
+Gravity Game
 ======================
 
-An experiment on [Processing.js](http://processingjs.org/), simulating universal gravitation in a simple fashion.
+This is a game prototype based on [Gravity](http://github.com/ohanhi/gravity)
 
-Uses parts of ES6, so might not work on all browsers (yet).
+Copyright 2014 Ossi Hanhinen
 
-
-License: [MIT](LICENSE)
 
 ## Live demo
 
-Click on the GIF
+Click on the image
 
-[![](screencap.gif)](http://ohanhi.github.io/gravity/)
+[![](screencap.png)](http://ohanhi.github.io/gravity-game/)
 
-
-## To Do
-
-☑ Parameters for the system
-
-☑ UI for parameters
-
-☑ Collision repositioning (jagged collisions bug)
-
-☑ Collision radius based on mass
-
-☑ Option: draw paths - click a part to get its path drawn!
-
-☑ Proto disk through Gaussian distribution
-
-☐ Zoomable canvas
-
-☐ Save/load system
